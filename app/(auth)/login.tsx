@@ -17,7 +17,7 @@ const login = () => {
             await signInWithEmailAndPassword(auth, email, password)
             .then(() => {
                 console.log("Login successful");
-                router.push('/(dashBoard)/home');
+                router.push('/home');
             })
             .catch((error) => {
                 console.error("Login error:", error);
