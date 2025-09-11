@@ -1,17 +1,20 @@
-import { initializeApp } from "firebase/app"
-import { getAuth } from "firebase/auth"
-import { getFirestore } from "firebase/firestore"
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAeiZ-838gDATVqV5ykyCpevaWXkBMJqaM",
-  authDomain: "task-manager-ead57.firebaseapp.com",
-  projectId: "task-manager-ead57",
-  storageBucket: "task-manager-ead57.firebasestorage.app",
-  messagingSenderId: "544806961634",
-  appId: "1:544806961634:web:a8ec18ef16a718c84579bb"
-}
+  apiKey: "AIzaSyCUzcdHMO-NK56bV56P2DS70IyCxwR4cW8",
+  authDomain: "minimal-habit-tracker-b8125.firebaseapp.com",
+  projectId: "minimal-habit-tracker-b8125",
+  storageBucket: "minimal-habit-tracker-b8125.firebasestorage.app",
+  messagingSenderId: "1035601014761",
+  appId: "1:1035601014761:web:aefb66d8b5ccf03ae72578",
+};
 
-const app = initializeApp(firebaseConfig)
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 
-export const auth = getAuth(app)
-export const db = getFirestore(app)
