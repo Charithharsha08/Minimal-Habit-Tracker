@@ -46,9 +46,9 @@ const DashboardLayout = () => {
       />
 
       <Tabs.Screen
-        name="add"
+        name="habit" 
         options={{
-          title: "Add",
+          title: "Habits",
           tabBarIcon: ({ color, size }) => (
             <FontAwesome6 name="plus" size={size} color={color} />
           ),

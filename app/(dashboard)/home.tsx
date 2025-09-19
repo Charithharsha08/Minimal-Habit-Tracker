@@ -73,45 +73,51 @@ const HabitScreen = () => {
             No habits available
           </Text>
         ) : (
-          habits.map((habit) => (
-            console.log(habit),
-            <View
-              key={habit.id}
-              className={`p-4 mb-4 rounded-2xl shadow ${
-                habit.done ? "bg-green-200" : "bg-white"
-              }`}
-            >
-              <Text
-                className={`text-lg font-semibold ${
-                  habit.done ? "line-through text-gray-600" : "text-gray-800"
-                }`}
-              >
-                {habit.title}
-              </Text>
-              {habit.description && (
-                <Text className="text-gray-600 mt-1">{habit.description}</Text>
-              )}
-
-              {/* Actions */}
-              <View className="flex-row justify-end mt-3 space-x-4">
-                <TouchableOpacity
-                  disabled={habit.locked}
-                  onPress={() => toggleHabit(habit.id!)}
-                  className={`px-3 py-1 rounded-lg ${
-                    habit.done ? "bg-gray-400" : "bg-green-500"
+          habits.map(
+            (habit) => (
+              console.log(habit),
+              (
+                <View
+                  key={habit.id}
+                  className={`p-4 mb-4 rounded-2xl shadow ${
+                    habit.done ? "bg-green-200" : "bg-white"
                   }`}
                 >
-                  <Text className="text-white font-medium">
-                    {habit.done ? "Done" : "Mark Done"}
+                  <Text
+                    className={`text-lg font-semibold ${
+                      habit.done
+                        ? "line-through text-gray-600"
+                        : "text-gray-800"
+                    }`}
+                  >
+                    {habit.title}
                   </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))
+                  {habit.description && (
+                    <Text className="text-gray-600 mt-1">
+                      {habit.description}
+                    </Text>
+                  )}
+
+                  {/* Actions */}
+                  <View className="flex-row justify-end mt-3 space-x-4">
+                    <TouchableOpacity
+                      disabled={habit.locked}
+                      onPress={() => toggleHabit(habit.id!)}
+                      className={`px-3 py-1 rounded-lg ${
+                        habit.done ? "bg-gray-400" : "bg-green-500"
+                      }`}
+                    >
+                      <Text className="text-white font-medium">
+                        {habit.done ? "Done" : "Mark Done"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )
+            )
+          )
         )}
       </ScrollView>
-
-      
     </View>
   );
 };

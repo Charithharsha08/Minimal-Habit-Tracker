@@ -72,7 +72,7 @@ const HabitFormScreen = () => {
       </View>
 
       <TouchableOpacity
-        className="bg-blue-500 rounded-lg p-4 items-center"
+        className="bg-red-500 p-4 rounded-xl mt-5 items-center"
         onPress={handleSubmit}
       >
         <Text className="text-white font-bold">
