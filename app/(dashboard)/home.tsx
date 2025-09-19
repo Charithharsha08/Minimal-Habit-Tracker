@@ -74,6 +74,7 @@ const HabitScreen = () => {
           </Text>
         ) : (
           habits.map((habit) => (
+            console.log(habit),
             <View
               key={habit.id}
               className={`p-4 mb-4 rounded-2xl shadow ${

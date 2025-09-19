@@ -20,7 +20,7 @@ const Add = () => {
      }
 
      const newHabit = {
-       name: habit,
+       title: habit,
        goal: goal || null,
        frequency,
        createdAt: new Date(),

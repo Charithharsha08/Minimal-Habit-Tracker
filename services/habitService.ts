@@ -13,7 +13,8 @@ import {
 export const habitColRef = collection(db, "habits");
 export const completeHabitColRef = collection(db, "completedHabits");
 
-export const createHabit = async (habit: any) => {
+export const createHabit = async (habit: Habit) => {
+  console.log("habit", habit);
   const docRef = await addDoc(habitColRef, habit);
   return docRef.id;
 };
