@@ -75,7 +75,7 @@ const index = () => {
 
       {/* Floating Add Button */}
       <Pressable
-        className="absolute bottom-6 right-6 bg-blue-600 p-4 rounded-full shadow-lg"
+        className="absolute bottom-6 right-6 bg-red-600 p-4 rounded-full shadow-lg"
         onPress={() => {
           router.push("/(dashboard)/habit/new");
         }}
