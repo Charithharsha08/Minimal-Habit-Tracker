@@ -17,6 +17,7 @@ import Logo from "@/components/logo";
 const Register = () => {
   const router = useRouter();
   const [email, setEmail] = React.useState("");
+  const [name, setName] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
@@ -41,7 +42,7 @@ const Register = () => {
     }
     try {
       setLoading(true);
-      await registerService(email, password);
+      await registerService(email, password, name);
       router.push("/(auth)/login");
     } catch (error) {
       console.error("Registration error:", error);
@@ -56,6 +57,15 @@ const Register = () => {
   return (
     <View className="flex-1 justify-center items-center bg-white px-6">
       <Logo />
+
+      <TextInput
+        className="border border-gray-300 rounded-xl p-3 w-full mb-4 bg-gray-50"
+        placeholder="Name"
+        value={name}
+        onChangeText={setName}
+        keyboardType="default"
+        autoCapitalize="words"
+      />
 
       <TextInput
         className="border border-gray-300 rounded-xl p-3 w-full mb-4 bg-gray-50"

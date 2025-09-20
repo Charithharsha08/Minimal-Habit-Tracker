@@ -1,19 +1,28 @@
-import { View, Text, Pressable, Image, TextInput, TouchableOpacity } from "react-native";
-import React, { useState } from "react";
+import { View, Text, Pressable, Image, TextInput, TouchableOpacity, Alert } from "react-native";
+import React, { use, useState } from "react";
 import { logout } from "@/services/authService";
 import { router } from "expo-router";
 import { auth } from "@/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { Pencil, Camera } from "lucide-react-native"; // icon lib (install if not already)
+import { addNewUser, getUserByEmail, updateUser } from "@/services/userService";
+import { get } from "axios";
+import { UserData } from "@/types/userData";
+import { Dropdown } from "react-native-element-dropdown";
+
 
 const Profile = () => {
   const [user, setUser] = React.useState<User | null>(auth.currentUser);
   const [isEditing, setIsEditing] = useState(false);
-  const [age, setAge] = useState("22");
-  const [weight, setWeight] = useState("68");
-  const [height, setHeight] = useState("175");
+  const [email, setEmail] = useState(user?.email || "");
+  const [name, setName] = useState(user?.displayName || "");
+  const [age, setAge] = useState(Number);
+const [sex, setSex] = useState<"male" | "female" | "">("");
+  const [weight, setWeight] = useState(Number);
+  const [height, setHeight] = useState(Number);
 
   React.useEffect(() => {
+    fetchUserData();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -21,7 +30,7 @@ const Profile = () => {
         router.replace("/(auth)/login");
       }
     });
-    return unsubscribe;
+    return unsubscribe
   }, []);
 
   const handleLogout = async () => {
@@ -33,10 +42,54 @@ const Profile = () => {
     }
   };
 
-  const handleUpdate = () => {
-    // you can call API here
-    setIsEditing(false);
+  const fetchUserData = async () => {
+    await getUserByEmail(user?.email || "")
+      .then((data) => {
+        if (data) {
+          setAge(data.age);
+          setWeight(data.weight);
+          setHeight(data.height);
+        }
+      })
+      .catch((error) => {
+      alert("User data not found, please update your profile.");
+      });
+
   };
+
+  const handleUpdate = async () => {
+    try {
+      const existingUser = await getUserByEmail(user?.email || "");
+      const updatedUser: UserData = {
+        name,
+        email,
+        age,
+        weight,
+        height,
+      };
+
+      if (existingUser?.id) {
+        // Update existing profile
+        await updateUser(existingUser.id, updatedUser);
+      } else {
+        // Create new profile (email as doc ID)
+        await addNewUser(updatedUser);
+      }
+
+      setIsEditing(false);
+      Alert.alert("Success", "Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating/creating user:", error);
+      Alert.alert("Error", "Something went wrong.");
+    }
+  };
+
+  const sexOptions = [
+    { label: "Male", value: "male" },
+    { label: "Female", value: "female" },
+  ];
+
+
 
   return (
     <View className="flex-1 bg-white p-5">
@@ -72,42 +125,85 @@ const Profile = () => {
       </View>
 
       {/* Labels / Inputs */}
+
       <View className="w-full mt-5 space-y-4">
+        {/* Sex */}
+        {isEditing ? (
+          <View className="mb-4">
+          <View className="border border-gray-300 rounded-lg">
+            <Dropdown
+              data={sexOptions}
+              labelField="label"
+              valueField="value"
+              placeholder="Select Sex"
+              value={sex}
+              onChange={(item) => setSex(item.value as "male" | "female")}
+              style={{
+                borderWidth: 1,
+                borderColor: "#d1d5db",
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+              }}
+              placeholderStyle={{ color: "#9ca3af", fontSize: 16 }}
+              selectedTextStyle={{ fontSize: 16, color: "#111827" }}
+              containerStyle={{ borderRadius: 8 }}
+              itemTextStyle={{ fontSize: 16, color: "#111827" }}
+            />
+          </View>
+          </View>
+        ) : (
+          <Text className="text-lg">Sex: {sex}</Text>
+        )}
+
         {/* Age */}
         {isEditing ? (
+          <View className="mb-4">
+            <Text className="text-lg mb-2">Age</Text>
           <TextInput
-            value={age}
-            onChangeText={setAge}
+            value={age !== undefined && age !== null ? String(age) : ""}
+            onChangeText={(text) => setAge(Number(text))}
             keyboardType="numeric"
             className="border border-gray-300 p-3 rounded-lg"
             placeholder="Enter Age"
           />
+          </View>
         ) : (
           <Text className="text-lg">Age: {age}</Text>
         )}
 
         {/* Weight */}
         {isEditing ? (
+          <View className="mb-4">
+          <Text className="text-lg mb-2">Weight (kg)</Text>
           <TextInput
-            value={weight}
-            onChangeText={setWeight}
+            value={
+              weight !== undefined && weight !== null ? String(weight) : ""
+            }
+            onChangeText={(text) => setWeight(Number(text))}
             keyboardType="numeric"
             className="border border-gray-300 p-3 rounded-lg"
             placeholder="Enter Weight"
           />
+          </View>
         ) : (
           <Text className="text-lg">Weight: {weight} kg</Text>
         )}
 
         {/* Height */}
         {isEditing ? (
+          <View className="mb-4">
+          <Text className="text-lg mb-2">Height (cm)</Text>
           <TextInput
-            value={height}
-            onChangeText={setHeight}
+            value={
+              height !== undefined && height !== null ? String(height) : ""
+            }
+            onChangeText={(text) => setHeight(Number(text))}
             keyboardType="numeric"
             className="border border-gray-300 p-3 rounded-lg"
             placeholder="Enter Height"
           />
+          </View>
         ) : (
           <Text className="text-lg">Height: {height} cm</Text>
         )}
