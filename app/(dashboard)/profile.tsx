@@ -1,10 +1,10 @@
-import { View, Text, Pressable, Image, TextInput, TouchableOpacity, Alert } from "react-native";
+import { View, Text, Pressable, Image, TextInput, TouchableOpacity, Alert, ScrollView } from "react-native";
 import React, { use, useState } from "react";
 import { logout } from "@/services/authService";
 import { router } from "expo-router";
 import { auth } from "@/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { Pencil, Camera } from "lucide-react-native"; // icon lib (install if not already)
+import { Pencil, Camera } from "lucide-react-native"; 
 import { addNewUser, getUserByEmail, updateUser } from "@/services/userService";
 import { get } from "axios";
 import { UserData } from "@/types/userData";
@@ -17,7 +17,7 @@ const Profile = () => {
   const [email, setEmail] = useState(user?.email || "");
   const [name, setName] = useState(user?.displayName || "");
   const [age, setAge] = useState(Number);
-const [sex, setSex] = useState<"male" | "female" | "">("");
+const [sex, setSex] = useState<"male" | "female" | null>(null);
   const [weight, setWeight] = useState(Number);
   const [height, setHeight] = useState(Number);
 
@@ -35,8 +35,24 @@ const [sex, setSex] = useState<"male" | "female" | "">("");
 
   const handleLogout = async () => {
     try {
-      await logout();
-      router.replace("/(auth)/login");
+      Alert.alert("Confirm Logout", "Are you sure you want to logout?", [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await logout();
+              router.replace("/(auth)/login");
+            } catch (error) {
+              console.error("Logout error:", error);
+            }
+          },
+        },
+      ]);
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -46,6 +62,7 @@ const [sex, setSex] = useState<"male" | "female" | "">("");
     await getUserByEmail(user?.email || "")
       .then((data) => {
         if (data) {
+          setSex(data.sex ?? null);
           setAge(data.age);
           setWeight(data.weight);
           setHeight(data.height);
@@ -63,6 +80,7 @@ const [sex, setSex] = useState<"male" | "female" | "">("");
       const updatedUser: UserData = {
         name,
         email,
+        sex: sex ?? null, 
         age,
         weight,
         height,
@@ -93,6 +111,7 @@ const [sex, setSex] = useState<"male" | "female" | "">("");
 
   return (
     <View className="flex-1 bg-white p-5">
+    <ScrollView>
       {/* Pencil button top right */}
       <TouchableOpacity
         className="absolute top-5 right-5"
@@ -130,43 +149,43 @@ const [sex, setSex] = useState<"male" | "female" | "">("");
         {/* Sex */}
         {isEditing ? (
           <View className="mb-4">
-          <View className="border border-gray-300 rounded-lg">
-            <Dropdown
-              data={sexOptions}
-              labelField="label"
-              valueField="value"
-              placeholder="Select Sex"
-              value={sex}
-              onChange={(item) => setSex(item.value as "male" | "female")}
-              style={{
-                borderWidth: 1,
-                borderColor: "#d1d5db",
-                borderRadius: 8,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-              }}
-              placeholderStyle={{ color: "#9ca3af", fontSize: 16 }}
-              selectedTextStyle={{ fontSize: 16, color: "#111827" }}
-              containerStyle={{ borderRadius: 8 }}
-              itemTextStyle={{ fontSize: 16, color: "#111827" }}
-            />
-          </View>
+            <View className="border border-gray-300 rounded-lg">
+              <Dropdown
+                data={sexOptions}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Sex"
+                value={sex ?? undefined}
+                onChange={(item) => setSex(item.value as "male" | "female")}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#d1d5db",
+                  borderRadius: 8,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                }}
+                placeholderStyle={{ color: "#9ca3af", fontSize: 16 }}
+                selectedTextStyle={{ fontSize: 16, color: "#111827" }}
+                containerStyle={{ borderRadius: 8 }}
+                itemTextStyle={{ fontSize: 16, color: "#111827" }}
+              />
+            </View>
           </View>
         ) : (
-          <Text className="text-lg">Sex: {sex}</Text>
+          <Text className="text-lg">Sex: {sex ? sex : "Not set"}</Text>
         )}
 
         {/* Age */}
         {isEditing ? (
           <View className="mb-4">
             <Text className="text-lg mb-2">Age</Text>
-          <TextInput
-            value={age !== undefined && age !== null ? String(age) : ""}
-            onChangeText={(text) => setAge(Number(text))}
-            keyboardType="numeric"
-            className="border border-gray-300 p-3 rounded-lg"
-            placeholder="Enter Age"
-          />
+            <TextInput
+              value={age !== undefined && age !== null ? String(age) : ""}
+              onChangeText={(text) => setAge(Number(text))}
+              keyboardType="numeric"
+              className="border border-gray-300 p-3 rounded-lg"
+              placeholder="Enter Age"
+            />
           </View>
         ) : (
           <Text className="text-lg">Age: {age}</Text>
@@ -175,16 +194,16 @@ const [sex, setSex] = useState<"male" | "female" | "">("");
         {/* Weight */}
         {isEditing ? (
           <View className="mb-4">
-          <Text className="text-lg mb-2">Weight (kg)</Text>
-          <TextInput
-            value={
-              weight !== undefined && weight !== null ? String(weight) : ""
-            }
-            onChangeText={(text) => setWeight(Number(text))}
-            keyboardType="numeric"
-            className="border border-gray-300 p-3 rounded-lg"
-            placeholder="Enter Weight"
-          />
+            <Text className="text-lg mb-2">Weight (kg)</Text>
+            <TextInput
+              value={
+                weight !== undefined && weight !== null ? String(weight) : ""
+              }
+              onChangeText={(text) => setWeight(Number(text))}
+              keyboardType="numeric"
+              className="border border-gray-300 p-3 rounded-lg"
+              placeholder="Enter Weight"
+            />
           </View>
         ) : (
           <Text className="text-lg">Weight: {weight} kg</Text>
@@ -193,16 +212,16 @@ const [sex, setSex] = useState<"male" | "female" | "">("");
         {/* Height */}
         {isEditing ? (
           <View className="mb-4">
-          <Text className="text-lg mb-2">Height (cm)</Text>
-          <TextInput
-            value={
-              height !== undefined && height !== null ? String(height) : ""
-            }
-            onChangeText={(text) => setHeight(Number(text))}
-            keyboardType="numeric"
-            className="border border-gray-300 p-3 rounded-lg"
-            placeholder="Enter Height"
-          />
+            <Text className="text-lg mb-2">Height (cm)</Text>
+            <TextInput
+              value={
+                height !== undefined && height !== null ? String(height) : ""
+              }
+              onChangeText={(text) => setHeight(Number(text))}
+              keyboardType="numeric"
+              className="border border-gray-300 p-3 rounded-lg"
+              placeholder="Enter Height"
+            />
           </View>
         ) : (
           <Text className="text-lg">Height: {height} cm</Text>
@@ -232,6 +251,7 @@ const [sex, setSex] = useState<"male" | "female" | "">("");
           </Text>
         </Pressable>
       )}
+      </ScrollView>
     </View>
   );
 };

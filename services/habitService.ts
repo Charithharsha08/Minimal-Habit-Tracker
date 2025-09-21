@@ -1,4 +1,4 @@
-import { db } from "@/firebase";
+import { db, auth } from "@/firebase";
 import { Habit } from "@/types/habit";
 import {
   addDoc,
@@ -8,19 +8,37 @@ import {
   getDoc,
   getDocs,
   updateDoc,
+  query,
+  where,
+  Timestamp,
 } from "firebase/firestore";
 
 export const habitColRef = collection(db, "habits");
 export const completeHabitColRef = collection(db, "completedHabits");
 
-export const createHabit = async (habit: Habit) => {
-  console.log("habit", habit);
-  const docRef = await addDoc(habitColRef, habit);
+export const createHabit = async (habit: Partial<Habit>) => {
+  // Ensure ownerId exists and createdAt is a Firestore Timestamp
+  const currentUser = auth.currentUser;
+  if (!currentUser) throw new Error("Not authenticated");
+
+  const habitWithOwner = {
+    ...habit,
+    ownerId: habit.ownerId ?? currentUser.uid,
+    createdAt: habit.createdAt ? habit.createdAt : new Date(),
+  };
+
+  const docRef = await addDoc(habitColRef, habitWithOwner as any);
   return docRef.id;
 };
 
-export const getHabitCollectionRef = () => {
-  return habitColRef;
+export const getAllHabitsByOwner = async (ownerId: string) => {
+  const q = query(habitColRef, where("ownerId", "==", ownerId));
+  const snapshot = await getDocs(q);
+  const habitList = snapshot.docs.map((d) => ({
+    id: d.id,
+    ...d.data(),
+  })) as Habit[];
+  return habitList;
 };
 
 export const updateHabit = async (id: string, habit: any) => {
@@ -43,18 +61,13 @@ export const getHabitById = async (id: string) => {
   return habit;
 };
 
-export const getAllHabits = async () => {
-  const snapshot = await getDocs(habitColRef);
-  const habitList = snapshot.docs.map((habitRef) => ({
-    id: habitRef.id,
-    ...habitRef.data(),
-  })) as any[];
-  return habitList;
-};
-
 export const saveCompletedHabit = async (habitId: string) => {
+  const currentUser = auth.currentUser;
+  if (!currentUser) throw new Error("Not authenticated");
+
   const docRef = await addDoc(completeHabitColRef, {
     habitId,
+    ownerId: currentUser.uid,
     completedAt: new Date(),
   });
   return docRef.id;
@@ -62,21 +75,21 @@ export const saveCompletedHabit = async (habitId: string) => {
 
 export const getCompletedHabits = async () => {
   const snapshot = await getDocs(completeHabitColRef);
-  const completedHabitList = snapshot.docs.map((habitRef) => ({
-    id: habitRef.id,
-    ...habitRef.data(),
+  const completedHabitList = snapshot.docs.map((d) => ({
+    id: d.id,
+    ...d.data(),
   })) as any[];
   return completedHabitList;
 };
 
 export const getCompletedHabitsByHabitId = async (habitId: string) => {
-  const snapshot = await getDocs(completeHabitColRef);
-  const completedHabitList = snapshot.docs
-    .map((habitRef) => ({
-      id: habitRef.id,
-      ...habitRef.data(),
-    }))
-    .filter((ch) => ch.id === habitId ) as any[];
+  // Query by habitId for efficiency & correctness
+  const q = query(completeHabitColRef, where("habitId", "==", habitId));
+  const snapshot = await getDocs(q);
+  const completedHabitList = snapshot.docs.map((d) => ({
+    id: d.id,
+    ...d.data(),
+  })) as any[];
   return completedHabitList;
 };
 
@@ -118,4 +131,3 @@ export const isHabitCompletedForPeriod = (
 
   return false;
 };
-

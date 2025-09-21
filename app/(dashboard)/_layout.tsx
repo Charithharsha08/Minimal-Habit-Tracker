@@ -22,13 +22,13 @@ const DashboardLayout = () => {
         tabBarStyle: {
           backgroundColor: "white",
           borderTopWidth: 1,
-          borderTopColor: "#e5e7eb", // Tailwind gray-200
+          borderTopColor: "#e5e7eb", 
           height: 70,
           paddingBottom: 10,
           paddingTop: 10,
         },
-        tabBarActiveTintColor: "#ef4444", // Tailwind red-500
-        tabBarInactiveTintColor: "#6b7280", // Tailwind gray-500
+        tabBarActiveTintColor: "#ef4444", 
+        tabBarInactiveTintColor: "#6b7280", 
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "600",
@@ -50,7 +50,7 @@ const DashboardLayout = () => {
         options={{
           title: "Habits",
           tabBarIcon: ({ color, size }) => (
-            <FontAwesome6 name="plus" size={size} color={color} />
+            <FontAwesome6 name="person-running" size={size} color={color} />
           ),
         }}
       />

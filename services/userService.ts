@@ -40,6 +40,6 @@ export const getUserByEmail = async (email: string): Promise<UserData | null> =>
 // Update user
 export const updateUser = async (id: string, user: UserData) => {
   const userDocRef = doc(db, "userData", id);
-  const { id: _id, ...userData } = user; // remove id
+  const { id: _id, ...userData } = user; 
   return await updateDoc(userDocRef, userData);
 };

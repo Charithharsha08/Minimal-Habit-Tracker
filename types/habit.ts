@@ -4,6 +4,7 @@ export interface Habit {
   description?: string;
   frequency: "Daily" | "Weekly" | "Monthly";
   createdAt?: Date;
+  ownerId: string; 
 }
 
 export interface CompletedHabit {
