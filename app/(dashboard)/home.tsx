@@ -10,7 +10,6 @@ import { useRouter } from "expo-router";
 import Entypo from "@expo/vector-icons/Entypo";
 
 import {
-  getAllHabits,
   getCompletedHabits,
   saveCompletedHabit,
   isHabitCompletedForPeriod,
@@ -28,24 +27,24 @@ const HabitScreen = () => {
   }, []);
 
   const handleFetchData = async () => {
-    const data: Habit[] = await getAllHabits();
+    //const data: Habit[] = await getAllHabits();
     const completed: CompletedHabit[] = await getCompletedHabits();
 
-    const merged = data.map((habit) => {
-      const completion = completed.find(
-        (c) =>
-          c.habitId === habit.id &&
-          isHabitCompletedForPeriod(habit, c.completedAt)
-      );
+    // // const merged = data.map((habit) => {
+    // //   const completion = completed.find(
+    // //     (c) =>
+    // //       c.habitId === habit.id &&
+    // //       isHabitCompletedForPeriod(habit, c.completedAt)
+    // //   );
 
-      return {
-        ...habit,
-        done: !!completion,
-        locked: !!completion,
-      };
-    });
+    // //   return {
+    // //     ...habit,
+    // //     done: !!completion,
+    // //     locked: !!completion,
+    // //   };
+    // });
 
-    setHabits(merged);
+    //setHabits(merged);
   };
 
   const toggleHabit = async (id: string) => {

@@ -7,14 +7,14 @@ type HabitCardProps = {
   data: Habit;
   onEdit?: (habit: Habit) => void;
   onDelete?: (id: string) => void;
-  onComplete?: (id: string) => void;
+ // onComplete?: (id: string) => void;
 };
 
 const HabitCard: React.FC<HabitCardProps> = ({
   data,
   onEdit,
   onDelete,
-  onComplete,
+ // onComplete,
 }) => {
   return (
     <View className="bg-white p-4 rounded-xl mb-4 shadow-sm flex-row justify-between items-center">
@@ -29,12 +29,12 @@ const HabitCard: React.FC<HabitCardProps> = ({
       <View
         style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}
       >
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => onComplete && onComplete(data.id!)}
           className="p-2 rounded-full mr-2 bg-green-500"
         >
           <Entypo name="check" size={20} color="white" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           onPress={() => onEdit && onEdit(data)}

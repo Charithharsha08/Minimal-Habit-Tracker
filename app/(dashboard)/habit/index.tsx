@@ -10,6 +10,8 @@ import {
 import HabitCard from "@/components/habitCard";
 import { Habit } from "@/types/habit";
 import { auth } from "@/firebase";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from "@/firebase";
 
 const HabitIndex = () => {
   const router = useRouter();
@@ -17,33 +19,37 @@ const HabitIndex = () => {
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
-    fetchAllHabits();
-    // subscribe to auth changes if needed
-  }, []);
-
-  const fetchAllHabits = async () => {
     const user = auth.currentUser;
     if (!user) {
-      // If user not logged in, redirect or show message
       console.warn("No user logged in");
       setHabits([]);
       return;
     }
 
-    try {
-      setLoading(true);
-      const list = await getAllHabitsByOwner(user.uid);
-      setHabits(list);
-    } catch (err) {
-      console.error("Error fetching habits:", err);
-      Alert.alert("Error", "Could not fetch habits.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setLoading(true);
+
+    const q = query(collection(db, "habits"), where("ownerId", "==", user.uid));
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list: Habit[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Habit),
+        }));
+        setHabits(list);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Error fetching habits:", err);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   const handleEdit = (habit: Habit) => {
-    // navigate to form with id
     router.push(`/(dashboard)/habit/${habit.id}`);
   };
 
@@ -57,6 +63,7 @@ const HabitIndex = () => {
           try {
             await deleteHabit(id);
             setHabits((prev) => prev.filter((h) => h.id !== id));
+            Alert.alert("Success", "Habit deleted.");
           } catch (err) {
             console.error("Delete failed:", err);
             Alert.alert("Error", "Delete failed.");
@@ -66,15 +73,15 @@ const HabitIndex = () => {
     ]);
   };
 
-  const handleComplete = async (id: string) => {
-    try {
-      await saveCompletedHabit(id);
-      Alert.alert("Success", "Marked completed for this period.");
-    } catch (err) {
-      console.error("Complete failed:", err);
-      Alert.alert("Error", "Could not mark complete.");
-    }
-  };
+  // const handleComplete = async (id: string) => {
+  //   try {
+  //     await saveCompletedHabit(id);
+  //     Alert.alert("Success", "Marked completed for this period.");
+  //   } catch (err) {
+  //     console.error("Complete failed:", err);
+  //     Alert.alert("Error", "Could not mark complete.");
+  //   }
+  // };
 
   return (
     <View className="flex-1 bg-gray-100">
@@ -98,7 +105,7 @@ const HabitIndex = () => {
             data={h}
             onEdit={handleEdit}
             onDelete={handleDelete}
-            onComplete={handleComplete}
+            //onComplete={handleComplete}
           />
         ))}
       </ScrollView>

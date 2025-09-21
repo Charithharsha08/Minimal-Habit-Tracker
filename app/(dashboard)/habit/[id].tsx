@@ -2,7 +2,8 @@ import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import React, { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
-import { createHabit } from "@/services/habitService";
+import { createHabit, getHabitById, updateHabit } from "@/services/habitService";
+import { ArrowLeft } from "lucide-react-native";
 
 const HabitFormScreen = () => {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -15,12 +16,23 @@ const HabitFormScreen = () => {
   );
   const router = useRouter();
 
+  React.useEffect(() => {
+    if (!isNew) {
+      getHabitById(id as string).then((habit) => {
+        if (habit) {
+          setTitle(habit.title);
+          setDescription(habit.description || "");
+          setFrequency(habit.frequency);
+        }
+      });
+    }
+  }, []);
+
   const handleSubmit = async () => {
     if (!title) {
       alert("Please enter a habit name");
       return;
     }
-
     try {
       if (isNew) {
         await createHabit({
@@ -30,17 +42,39 @@ const HabitFormScreen = () => {
           createdAt: new Date(),
         });
         alert("Habit created successfully");
-        router.back();
+      } else {
+
+       await updateHabit(id as string, {
+          title,
+          description,
+          frequency,
+        });
+        alert("Habit updated successfully");
+
       }
     } catch (error) {
+
       console.error("Error saving habit:", error);
-      alert("Error saving habit");
+
+      if (isNew) alert("Error creating habit");
+      else alert("Error updating habit");
+
+    }finally {
+      router.back();
     }
   };
 
   return (
     <View className="flex-1 p-5 bg-white">
-      <Text className="text-2xl font-bold mb-5">
+
+      <TouchableOpacity
+        className="absolute top-5 left-5 z-10 p-2 mb-5"
+        onPress={() => router.back()}
+      >
+        <ArrowLeft size={24} color="black" />
+      </TouchableOpacity>
+
+      <Text className="text-2xl font-bold mb-5 text-center">
         {isNew ? "Add Habit" : "Edit Habit"}
       </Text>
 
