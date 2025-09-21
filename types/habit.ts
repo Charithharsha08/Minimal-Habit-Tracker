@@ -11,4 +11,5 @@ export interface CompletedHabit {
   id?: string;
   habitId: string;
   completedAt: Date;
+  ownerId: string;
 }

@@ -32,7 +32,7 @@ const Login = () => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/profile");
+      router.push("/home");
     } catch (error) {
       console.error("Login error:", error);
     } finally {

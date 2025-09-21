@@ -12,6 +12,7 @@ import { Habit } from "@/types/habit";
 import { auth } from "@/firebase";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/firebase";
+import Logo from "@/components/logo";
 
 const HabitIndex = () => {
   const router = useRouter();
@@ -85,7 +86,11 @@ const HabitIndex = () => {
 
   return (
     <View className="flex-1 bg-gray-100">
-      <Text className="text-2xl font-bold p-5">Habit Tracker</Text>
+      <View className="w-full py-5 items-center">
+        <Logo />
+      </View>
+
+      <Text className="text-2xl font-bold py-5">Your All Habits</Text>
 
       <ScrollView
         className="px-5"

@@ -1,124 +1,93 @@
-import {
-  View,
-  Text,
-  Pressable,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
-import Entypo from "@expo/vector-icons/Entypo";
-
+import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import { Habit, CompletedHabit } from "@/types/habit";
+import ProcessingHabitCard from "@/components/ProcessingHabitCard";
+import { auth } from "@/firebase";
 import {
-  getCompletedHabits,
+  getAllHabitsByOwner,
+  getCompletedHabitsByHabitId,
   saveCompletedHabit,
   isHabitCompletedForPeriod,
 } from "@/services/habitService";
-import { CompletedHabit, Habit } from "@/types/habit";
 
-const HabitScreen = () => {
-  const router = useRouter();
-  const [habits, setHabits] = useState<
-    (Habit & { done?: boolean; locked?: boolean })[]
-  >([]);
+const Home = () => {
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [completedHabitIds, setCompletedHabitIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(true); // <-- loading state
+  const currentUser = auth.currentUser;
+  console.log("Current user:", currentUser?.uid);
+  
 
   useEffect(() => {
-    handleFetchData();
-  }, []);
+    if (!currentUser) return;
 
-  const handleFetchData = async () => {
-    //const data: Habit[] = await getAllHabits();
-    const completed: CompletedHabit[] = await getCompletedHabits();
+    const loadHabits = async () => {
+      setLoading(true);
+      try {
+        const allHabits = await getAllHabitsByOwner(currentUser.uid);
+        const todayHabits: Habit[] = [];
 
-    // // const merged = data.map((habit) => {
-    // //   const completion = completed.find(
-    // //     (c) =>
-    // //       c.habitId === habit.id &&
-    // //       isHabitCompletedForPeriod(habit, c.completedAt)
-    // //   );
+        for (let habit of allHabits) {
+          if (habit.frequency === "Daily") todayHabits.push(habit);
+          else todayHabits.push(habit); // weekly/monthly as possible
 
-    // //   return {
-    // //     ...habit,
-    // //     done: !!completion,
-    // //     locked: !!completion,
-    // //   };
-    // });
+          const completedList: CompletedHabit[] =
+            await getCompletedHabitsByHabitId(habit.id!);
+          const completedToday = completedList.some((c) =>
+            isHabitCompletedForPeriod(habit, c.completedAt)
+          );
+          if (completedToday)
+            setCompletedHabitIds((prev) => [...prev, habit.id!]);
+        }
 
-    //setHabits(merged);
+        setHabits(todayHabits);
+      } catch (error) {
+        console.error("Failed to load habits:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadHabits();
+  }, [currentUser]);
+
+  const handleComplete = async (habitId: string) => {
+    await saveCompletedHabit(habitId);
+    setCompletedHabitIds((prev) => [...prev, habitId]);
   };
 
-  const toggleHabit = async (id: string) => {
-    const habit = habits.find((h) => h.id === id);
-    if (!habit || habit.locked) return;
-
-    await saveCompletedHabit(id);
-
-    setHabits((prev) =>
-      prev.map((h) => (h.id === id ? { ...h, done: true, locked: true } : h))
+  if (loading) {
+    // Show loading spinner while habits are being fetched
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
     );
-  };
+  }
 
   return (
-    <View className="flex-1 bg-gray-100">
-      {/* Header */}
-      <View className="w-full py-4 bg-blue-600 items-center">
-        <Text className="text-white text-xl font-semibold">Habits</Text>
-      </View>
-
-      {/* Habits List */}
-      <ScrollView className="px-4 pt-4">
-        {habits.length === 0 ? (
-          <Text className="text-gray-500 text-center mt-10">
-            No habits available
-          </Text>
-        ) : (
-          habits.map(
-            (habit) => (
-              console.log(habit),
-              (
-                <View
-                  key={habit.id}
-                  className={`p-4 mb-4 rounded-2xl shadow ${
-                    habit.done ? "bg-green-200" : "bg-white"
-                  }`}
-                >
-                  <Text
-                    className={`text-lg font-semibold ${
-                      habit.done
-                        ? "line-through text-gray-600"
-                        : "text-gray-800"
-                    }`}
-                  >
-                    {habit.title}
-                  </Text>
-                  {habit.description && (
-                    <Text className="text-gray-600 mt-1">
-                      {habit.description}
-                    </Text>
-                  )}
-
-                  {/* Actions */}
-                  <View className="flex-row justify-end mt-3 space-x-4">
-                    <TouchableOpacity
-                      disabled={habit.locked}
-                      onPress={() => toggleHabit(habit.id!)}
-                      className={`px-3 py-1 rounded-lg ${
-                        habit.done ? "bg-gray-400" : "bg-green-500"
-                      }`}
-                    >
-                      <Text className="text-white font-medium">
-                        {habit.done ? "Done" : "Mark Done"}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )
-            )
-          )
-        )}
-      </ScrollView>
+    <View className="flex-1 bg-gray-50 p-5">
+      <Text className="text-2xl font-bold mb-4">Today's Habits</Text>
+      {habits.length === 0 ? (
+        <Text className="text-gray-400 text-center mt-10">
+          No habits to do today!
+        </Text>
+      ) : (
+        <FlatList
+          data={habits}
+          keyExtractor={(item) => item.id!}
+          renderItem={({ item }) => (
+            <ProcessingHabitCard
+              habit={item}
+              isCompleted={completedHabitIds.includes(item.id!)}
+              onComplete={handleComplete}
+            />
+          )}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 };
 
-export default HabitScreen;
+export default Home;

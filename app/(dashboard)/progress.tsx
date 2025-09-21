@@ -1,21 +1,17 @@
 import { View, Text } from "react-native";
 import React, { use, useEffect } from "react";
 import { getCompletedHabits } from "@/services/habitService";
+import Logo from "@/components/logo";
+import { auth } from "@/firebase";
 
 const Progress = () => {
 
-  useEffect(() => {
-    fetchCompletedHabits();
-  }, [])
-
-
-  const fetchCompletedHabits = async () => {
-    const response = await getCompletedHabits();
-    console.log(response);
-  }
-
   return (
     <View className="flex-1 bg-white p-5">
+      <View className="w-full py-1 items-center">
+        <Logo />
+      </View>
+      
       <Text className="text-2xl font-bold mb-6">Your Progress</Text>
 
       {/* Streak */}
