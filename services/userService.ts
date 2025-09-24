@@ -43,3 +43,20 @@ export const updateUser = async (id: string, user: UserData) => {
   const { id: _id, ...userData } = user; 
   return await updateDoc(userDocRef, userData);
 };
+
+
+export const getUserByUid = async (uid: string): Promise<UserData | null> => {
+  if (!uid) return null; // safety check
+
+  try {
+    const userDocRef = doc(db, "userData", uid);
+    const snapshot = await getDoc(userDocRef);
+
+    if (!snapshot.exists()) return null;
+
+    return { id: snapshot.id, ...(snapshot.data() as UserData) };
+  } catch (error) {
+    console.error("Error fetching user by UID:", error);
+    return null;
+  }
+};

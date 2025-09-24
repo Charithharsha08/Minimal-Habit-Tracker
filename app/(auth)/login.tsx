@@ -7,6 +7,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase";
 import * as Google from "expo-auth-session/providers/google";
 import Logo from "@/components/logo";
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 
 const Login = () => {
   const router = useRouter();
@@ -16,17 +17,33 @@ const Login = () => {
 
   // Setup Google sign-in
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: "<YOUR_GOOGLE_CLIENT_ID>",  // replace with yours
+    clientId:
+      "1035601014761-4g8hnco9m94gvhs1nm740i9103dtkjlm.apps.googleusercontent.com",
+    iosClientId:
+      "1035601014761-kqv8v0cg40uhr7jmi5bojtfr26v4qjiu.apps.googleusercontent.com",
+    androidClientId:
+      "1035601014761-vh26ukhrmn4klbgrqu6ubod13mhc02b3.apps.googleusercontent.com",
+    scopes: ["profile", "email"],
   });
 
   React.useEffect(() => {
     if (response?.type === "success") {
       const { id_token } = response.params;
-      // send id_token to your server or firebase
-      // after verification, navigate
-      router.push("/home");
+
+      // Create a Firebase credential with the token
+      const credential = GoogleAuthProvider.credential(id_token);
+
+      // Sign in with Firebase
+      signInWithCredential(auth, credential)
+        .then(() => {
+          router.push("/home");
+        })
+        .catch((error) => {
+          console.error("Google sign-in error:", error);
+        });
     }
   }, [response]);
+
 
   const handleLogin = async () => {
     setLoading(true);

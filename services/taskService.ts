@@ -62,8 +62,6 @@ export const getAllTaskByUserId = async (userId: string) => {
   return taskList
 }
 
-// ================================================================
-// axios with mock server api intrigation
 export const getAllTask = async () => {
   const res = await api.get("/task")
   return res.data

@@ -29,7 +29,9 @@ const HabitIndex = () => {
 
     setLoading(true);
 
-    const q = query(collection(db, "habits"), where("ownerId", "==", user.uid));
+    // const q = query(collection(db, "habits"), where("ownerId", "==", user.uid));
+
+    const q = getAllHabitsByOwner(user.uid);
 
     const unsubscribe = onSnapshot(
       q,

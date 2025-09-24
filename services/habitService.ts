@@ -31,14 +31,10 @@ export const createHabit = async (habit: Partial<Habit>) => {
   return docRef.id;
 };
 
-export const getAllHabitsByOwner = async (ownerId: string) => {
-  const q = query(habitColRef, where("ownerId", "==", ownerId));
-  const snapshot = await getDocs(q);
-  const habitList = snapshot.docs.map((d) => ({
-    id: d.id,
-    ...d.data(),
-  })) as Habit[];
-  return habitList;
+
+export const getAllHabitsByOwner = (ownerId: string) => {
+  // ✅ Return query instead of fetching
+  return query(habitColRef, where("ownerId", "==", ownerId));
 };
 
 export const updateHabit = async (id: string, habit: any) => {
@@ -74,22 +70,34 @@ export const saveCompletedHabit = async (habitId: string) => {
 };
 
 export const getCompletedHabits = async () => {
-  const snapshot = await getDocs(completeHabitColRef);
-  const completedHabitList = snapshot.docs.map((d) => ({
-    id: d.id,
-    ...d.data(),
-  })) as any[];
-  return completedHabitList;
-};
+  const user = auth.currentUser;
+  if (!user) throw new Error("User not authenticated");
 
-export const getCompletedHabitsByHabitId = async (habitId: string) => {
-  // Query by habitId for efficiency & correctness
-  const q = query(completeHabitColRef, where("habitId", "==", habitId));
+  const q = query(
+    completeHabitColRef,
+    where("ownerId", "==", user.uid)
+  );
+
   const snapshot = await getDocs(q);
   const completedHabitList = snapshot.docs.map((d) => ({
     id: d.id,
     ...d.data(),
   })) as any[];
+
+  return completedHabitList;
+};
+
+export const getCompletedHabitsByHabitId = async (habitId: string , userId: string) => {
+  const q = query(completeHabitColRef, where("habitId", "==", habitId), where("ownerId", "==", userId));
+  const snapshot = await getDocs(q);
+  const completedHabitList = snapshot.docs.map((d) => ({
+    id: d.id,
+    ...d.data(),
+  })) as any[];
+  console.log("habit list length", completedHabitList.length);
+  for (const habit of completedHabitList) {
+    console.log("habit", habit);
+  }
   return completedHabitList;
 };
 
@@ -103,6 +111,9 @@ export const isHabitCompletedForPeriod = (
   completedAt: Date
 ): boolean => {
   const now = new Date();
+
+  console.log("Checking completion for habit:", habit);
+  
 
   if (habit.frequency === "Daily") {
     return now.toDateString() === new Date(completedAt).toDateString();

@@ -2,54 +2,85 @@ import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { Habit, CompletedHabit } from "@/types/habit";
 import ProcessingHabitCard from "@/components/ProcessingHabitCard";
-import { auth } from "@/firebase";
+import { auth, db } from "@/firebase";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import {
-  getAllHabitsByOwner,
   getCompletedHabitsByHabitId,
   saveCompletedHabit,
   isHabitCompletedForPeriod,
+  getAllHabitsByOwner,
 } from "@/services/habitService";
 
 const Home = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [completedHabitIds, setCompletedHabitIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState<boolean>(true); // <-- loading state
+  const [loading, setLoading] = useState<boolean>(true);
   const currentUser = auth.currentUser;
-  console.log("Current user:", currentUser?.uid);
-  
 
   useEffect(() => {
-    if (!currentUser) return;
+    const user = auth.currentUser;
+    if (!user) {
+      console.warn("No user logged in");
+      setHabits([]);
+      return;
+    }
 
-    const loadHabits = async () => {
-      setLoading(true);
-      try {
-        const allHabits = await getAllHabitsByOwner(currentUser.uid);
-        const todayHabits: Habit[] = [];
+    setLoading(true);
 
-        for (let habit of allHabits) {
-          if (habit.frequency === "Daily") todayHabits.push(habit);
-          else todayHabits.push(habit); // weekly/monthly as possible
+    // const q = query(collection(db, "habits"), where("ownerId", "==", user.uid));
 
-          const completedList: CompletedHabit[] =
-            await getCompletedHabitsByHabitId(habit.id!);
-          const completedToday = completedList.some((c) =>
-            isHabitCompletedForPeriod(habit, c.completedAt)
-          );
-          if (completedToday)
-            setCompletedHabitIds((prev) => [...prev, habit.id!]);
+    const q = getAllHabitsByOwner(user.uid);
+
+    const unsubscribe = onSnapshot(
+      q,
+      async (snapshot) => {
+        try {
+          const list: Habit[] = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...(doc.data() as Habit),
+          }));
+
+          const todayHabits: Habit[] = [];
+          const completedIds: string[] = [];
+
+          for (let habit of list) {
+            // Add habit to todayHabits (you can filter by frequency if needed)
+            todayHabits.push(habit);
+
+            // Check completion status
+            let completedList: CompletedHabit[] = [];
+            if (currentUser?.uid) {
+              completedList = await getCompletedHabitsByHabitId(habit.id!, currentUser.uid);
+              console.log("completedList length", completedList.length);
+            }
+
+            const completedToday = completedList.some((c) =>
+              isHabitCompletedForPeriod(habit, c.completedAt)
+            );
+
+            console.log("completedToday", completedToday);
+            
+            if (completedToday) {
+              completedIds.push(habit.id!);
+            }
+          }
+
+          setHabits(todayHabits);
+          setCompletedHabitIds(completedIds);
+        } catch (error) {
+          console.error("Failed to process habits:", error);
+        } finally {
+          setLoading(false);
         }
-
-        setHabits(todayHabits);
-      } catch (error) {
-        console.error("Failed to load habits:", error);
-      } finally {
+      },
+      (err) => {
+        console.error("Error fetching habits:", err);
         setLoading(false);
       }
-    };
+    );
 
-    loadHabits();
-  }, [currentUser]);
+    return () => unsubscribe();
+  }, []);
 
   const handleComplete = async (habitId: string) => {
     await saveCompletedHabit(habitId);
@@ -57,7 +88,6 @@ const Home = () => {
   };
 
   if (loading) {
-    // Show loading spinner while habits are being fetched
     return (
       <View className="flex-1 justify-center items-center bg-gray-50">
         <ActivityIndicator size="large" color="#3b82f6" />

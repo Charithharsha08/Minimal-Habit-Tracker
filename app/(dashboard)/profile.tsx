@@ -5,7 +5,7 @@ import { router } from "expo-router";
 import { auth } from "@/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { Pencil, Camera } from "lucide-react-native"; 
-import { addNewUser, getUserByEmail, updateUser } from "@/services/userService";
+import { addNewUser, getUserByEmail, getUserByUid, updateUser } from "@/services/userService";
 import { get } from "axios";
 import { UserData } from "@/types/userData";
 import { Dropdown } from "react-native-element-dropdown";
@@ -59,21 +59,36 @@ const [sex, setSex] = useState<"male" | "female" | null>(null);
     }
   };
 
-  const fetchUserData = async () => {
-    await getUserByEmail(user?.email || "")
-      .then((data) => {
-        if (data) {
-          setSex(data.sex ?? null);
-          setAge(data.age);
-          setWeight(data.weight);
-          setHeight(data.height);
-        }
-      })
-      .catch((error) => {
-      alert("User data not found, please update your profile.");
-      });
+  // const fetchUserData = async () => {
+  //   await getUserByEmail(user?.email || "")
+  //     .then((data) => {
+  //       if (data) {
+  //         setSex(data.sex ?? null);
+  //         setAge(data.age);
+  //         setWeight(data.weight);
+  //         setHeight(data.height);
+  //       }
+  //     })
+  //     .catch((error) => {
+  //     alert("User data not found, please update your profile.");
+  //     });
 
+  // };
+
+  const fetchUserData = async () => {
+    if (!user?.uid) return; // make sure we have a user
+
+    const data = await getUserByUid(user.uid);
+    if (data) {
+      setSex(data.sex ?? null);
+      setAge(data.age);
+      setWeight(data.weight);
+      setHeight(data.height);
+    } else {
+      alert("User data not found, please update your profile.");
+    }
   };
+
 
   const handleUpdate = async () => {
     try {

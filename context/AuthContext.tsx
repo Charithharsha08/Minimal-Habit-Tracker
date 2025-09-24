@@ -1,5 +1,5 @@
 import { auth } from "@/firebase";
-import { onAuthStateChanged, User } from "@firebase/auth";
+import { onAuthStateChanged, User } from "firebase/auth";
 import {
   createContext,
   ReactNode,
