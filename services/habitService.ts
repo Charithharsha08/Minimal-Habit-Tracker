@@ -1,5 +1,5 @@
 import { db, auth } from "@/firebase";
-import { Habit } from "@/types/habit";
+import { CompletedHabit, Habit } from "@/types/habit";
 import {
   addDoc,
   collection,
@@ -61,13 +61,33 @@ export const saveCompletedHabit = async (habitId: string) => {
   const currentUser = auth.currentUser;
   if (!currentUser) throw new Error("Not authenticated");
 
+  // Fetch completions for this habit
+  const existing = await getCompletedHabitsByHabitId(habitId, currentUser.uid);
+
+  // Grab the habit details (mainly for frequency)
+  const habitDoc = await getHabitById(habitId);
+  if (!habitDoc) throw new Error("Habit not found");
+
+  // ✅ Check if already completed for current period
+  const alreadyCompleted = existing.some((c) =>
+    isHabitCompletedForPeriod(habitDoc, c.completedAt)
+  );
+
+  if (alreadyCompleted) {
+    console.log("Habit already completed for this period.");
+    return null; // 🚫 Don't save duplicate
+  }
+
+  // Save new completion
   const docRef = await addDoc(completeHabitColRef, {
     habitId,
     ownerId: currentUser.uid,
     completedAt: new Date(),
   });
+
   return docRef.id;
 };
+
 
 export const getCompletedHabits = async () => {
   const user = auth.currentUser;
@@ -87,19 +107,32 @@ export const getCompletedHabits = async () => {
   return completedHabitList;
 };
 
-export const getCompletedHabitsByHabitId = async (habitId: string , userId: string) => {
-  const q = query(completeHabitColRef, where("habitId", "==", habitId), where("ownerId", "==", userId));
+export const getCompletedHabitsByHabitId = async (
+  habitId: string,
+  userId: string
+) => {
+  const q = query(
+    completeHabitColRef,
+    where("habitId", "==", habitId),
+    where("ownerId", "==", userId)
+  );
   const snapshot = await getDocs(q);
-  const completedHabitList = snapshot.docs.map((d) => ({
-    id: d.id,
-    ...d.data(),
-  })) as any[];
-  console.log("habit list length", completedHabitList.length);
-  for (const habit of completedHabitList) {
-    console.log("habit", habit);
-  }
+
+  const completedHabitList = snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      ...data,
+      // ✅ Normalize Firestore Timestamp → JS Date
+      completedAt: data.completedAt?.toDate
+        ? data.completedAt.toDate()
+        : data.completedAt,
+    } as CompletedHabit;
+  });
+
   return completedHabitList;
 };
+
 
 export const deleteCompletedHabit = async (id: string) => {
   const docRef = doc(db, "completedHabits", id);
@@ -111,9 +144,6 @@ export const isHabitCompletedForPeriod = (
   completedAt: Date
 ): boolean => {
   const now = new Date();
-
-  console.log("Checking completion for habit:", habit);
-  
 
   if (habit.frequency === "Daily") {
     return now.toDateString() === new Date(completedAt).toDateString();

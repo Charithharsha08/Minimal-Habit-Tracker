@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { Habit, CompletedHabit } from "@/types/habit";
 import ProcessingHabitCard from "@/components/ProcessingHabitCard";
-import { auth, db } from "@/firebase";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { auth } from "@/firebase";
+import { onSnapshot } from "firebase/firestore";
 import {
   getCompletedHabitsByHabitId,
   saveCompletedHabit,
@@ -27,8 +27,6 @@ const Home = () => {
 
     setLoading(true);
 
-    // const q = query(collection(db, "habits"), where("ownerId", "==", user.uid));
-
     const q = getAllHabitsByOwner(user.uid);
 
     const unsubscribe = onSnapshot(
@@ -43,25 +41,39 @@ const Home = () => {
           const todayHabits: Habit[] = [];
           const completedIds: string[] = [];
 
-          for (let habit of list) {
-            // Add habit to todayHabits (you can filter by frequency if needed)
-            todayHabits.push(habit);
+          const now = new Date();
+          const isSunday = now.getDay() === 0; // Sunday
+          const isFirstDayOfMonth = now.getDate() === 1;
 
-            // Check completion status
-            let completedList: CompletedHabit[] = [];
-            if (currentUser?.uid) {
-              completedList = await getCompletedHabitsByHabitId(habit.id!, currentUser.uid);
-              console.log("completedList length", completedList.length);
+          for (let habit of list) {
+            let shouldAdd = false;
+
+            if (habit.frequency === "Daily") {
+              shouldAdd = true;
+            } else if (habit.frequency === "Weekly" && isSunday) {
+              shouldAdd = true;
+            } else if (habit.frequency === "Monthly" && isFirstDayOfMonth) {
+              shouldAdd = true;
             }
 
-            const completedToday = completedList.some((c) =>
-              isHabitCompletedForPeriod(habit, c.completedAt)
-            );
+            if (shouldAdd) {
+              todayHabits.push(habit);
 
-            console.log("completedToday", completedToday);
-            
-            if (completedToday) {
-              completedIds.push(habit.id!);
+              let completedList: CompletedHabit[] = [];
+              if (currentUser?.uid) {
+                completedList = await getCompletedHabitsByHabitId(
+                  habit.id!,
+                  currentUser.uid
+                );
+              }
+
+              const completedToday = completedList.some((c) =>
+                isHabitCompletedForPeriod(habit, c.completedAt)
+              );
+
+              if (completedToday) {
+                completedIds.push(habit.id!);
+              }
             }
           }
 
