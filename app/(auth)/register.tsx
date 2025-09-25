@@ -1,5 +1,4 @@
 // pages/(auth)/register.tsx
-
 import {
   View,
   Text,
@@ -7,6 +6,9 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import React from "react";
 import { useRouter } from "expo-router";
@@ -22,108 +24,125 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
-  // Google sign-up/use same flow
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: "<YOUR_GOOGLE_CLIENT_ID>",
+    clientId: "YOUR_GOOGLE_CLIENT_ID",
   });
 
   React.useEffect(() => {
     if (response?.type === "success") {
       const { id_token } = response.params;
-      // send id_token to server or firebase
       router.push("/home");
     }
   }, [response]);
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
-      console.error("Passwords do not match");
+      alert("Passwords don’t match");
       return;
     }
     try {
       setLoading(true);
       await registerService(email, password, name);
       router.push("/(auth)/login");
-    } catch (error) {
-      console.error("Registration error:", error);
+    } catch (error: any) {
+      alert(error.message || "Registration failed.");
     } finally {
       setLoading(false);
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
     }
   };
 
   return (
-    <View className="flex-1 justify-center items-center bg-white px-6">
-      <Logo />
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      className="flex-1 bg-gray-50"
+    >
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        {/* Logo header */}
+        <View className="px-6 pt-16 pb-8 justify-center items-center bg-white">
+          <Logo />
+        </View>
 
-      <TextInput
-        className="border border-gray-300 rounded-xl p-3 w-full mb-4 bg-gray-50"
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-        keyboardType="default"
-        autoCapitalize="words"
-      />
-
-      <TextInput
-        className="border border-gray-300 rounded-xl p-3 w-full mb-4 bg-gray-50"
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        className="border border-gray-300 rounded-xl p-3 w-full mb-4 bg-gray-50"
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      <TextInput
-        className="border border-gray-300 rounded-xl p-3 w-full mb-6 bg-gray-50"
-        placeholder="Confirm Password"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
-
-      {loading ? (
-        <ActivityIndicator color="#2563eb" size="large" />
-      ) : (
-        <Pressable
-          className="bg-blue-600 p-3 rounded-xl w-full mb-4 shadow-md"
-          onPress={handleRegister}
-        >
-          <Text className="text-white text-center font-semibold text-lg">
-            Sign Up
+        {/* Main content */}
+        <View className="px-6 mt-6">
+          <Text className="text-3xl font-bold text-gray-900 mb-2 text-center">
+            Create Account ✨
           </Text>
-        </Pressable>
-      )}
+          <Text className="text-gray-500 mb-8 text-center">
+            Start building better habits today
+          </Text>
 
-      {/* Google Sign Up / Use Google */}
-      <Pressable
-        className="flex-row items-center border border-gray-300 rounded-xl w-full p-3 mb-4 bg-white shadow"
-        onPress={() => promptAsync()}
-      >
-        <Image
-          source={require("../../assets/icons/google-icon.png")}
-          className="w-6 h-6 mr-3"
-          resizeMode="contain"
-        />
-        <Text className="text-gray-700 text-center text-lg">
-          Sign up with Google
-        </Text>
-      </Pressable>
+          {/* Inputs */}
+          <TextInput
+            className="border border-gray-300 rounded-xl p-4 mb-4 bg-white"
+            placeholder="Name"
+            placeholderTextColor="#9ca3af"
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            className="border border-gray-300 rounded-xl p-4 mb-4 bg-white"
+            placeholder="Email"
+            placeholderTextColor="#9ca3af"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TextInput
+            className="border border-gray-300 rounded-xl p-4 mb-4 bg-white"
+            placeholder="Password"
+            placeholderTextColor="#9ca3af"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TextInput
+            className="border border-gray-300 rounded-xl p-4 mb-6 bg-white"
+            placeholder="Confirm Password"
+            placeholderTextColor="#9ca3af"
+            secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
 
-      <Pressable onPress={() => router.push("/(auth)/login")}>
-        <Text className="text-blue-600 text-sm">
-          Already have an account? Login
-        </Text>
-      </Pressable>
-    </View>
+          {/* Register Button */}
+          <Pressable
+            className="bg-red-400 p-4 rounded-xl mb-4"
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-center text-white font-semibold text-lg">
+                Sign Up
+              </Text>
+            )}
+          </Pressable>
+
+          {/* Google Button */}
+          <Pressable
+            onPress={() => promptAsync()}
+            className="flex-row items-center border border-gray-300 rounded-xl p-4 bg-white mb-6"
+          >
+            <Image
+              source={require("../../assets/icons/google-icon.png")}
+              className="w-6 h-6 mr-3"
+              resizeMode="contain"
+            />
+            <Text className="text-gray-700 text-lg">Continue with Google</Text>
+          </Pressable>
+
+          {/* Redirect */}
+          <Pressable onPress={() => router.push("/(auth)/login")}>
+            <Text className="text-center text-gray-600">
+              Already have an account?{" "}
+              <Text className="text-red-400 font-semibold">Login</Text>
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

@@ -1,18 +1,21 @@
 import React from "react";
-import { View, Text, Pressable, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useRouter } from "expo-router";
-import {
-  getAllHabitsByOwner,
-  deleteHabit,
-  saveCompletedHabit,
-} from "@/services/habitService";
-import HabitCard from "@/components/habitCard";
+import { onSnapshot } from "firebase/firestore";
+
+import { getAllHabitsByOwner, deleteHabit } from "@/services/habitService";
 import { Habit } from "@/types/habit";
 import { auth } from "@/firebase";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { db } from "@/firebase";
 import Logo from "@/components/logo";
+import HabitCard from "@/components/habitCard";
 
 const HabitIndex = () => {
   const router = useRouter();
@@ -22,14 +25,12 @@ const HabitIndex = () => {
   React.useEffect(() => {
     const user = auth.currentUser;
     if (!user) {
-      console.warn("No user logged in");
+      console.warn("⚠️ No user logged in");
       setHabits([]);
       return;
     }
 
     setLoading(true);
-
-    // const q = query(collection(db, "habits"), where("ownerId", "==", user.uid));
 
     const q = getAllHabitsByOwner(user.uid);
 
@@ -57,7 +58,7 @@ const HabitIndex = () => {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert("Delete habit", "Are you sure you want to delete this habit?", [
+    Alert.alert("Delete Habit", "Are you sure you want to delete this habit?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
@@ -66,45 +67,45 @@ const HabitIndex = () => {
           try {
             await deleteHabit(id);
             setHabits((prev) => prev.filter((h) => h.id !== id));
-            Alert.alert("Success", "Habit deleted.");
+            Alert.alert("✅ Success", "Habit deleted successfully.");
           } catch (err) {
             console.error("Delete failed:", err);
-            Alert.alert("Error", "Delete failed.");
+            Alert.alert("❌ Error", "Delete failed. Try again.");
           }
         },
       },
     ]);
   };
 
-  // const handleComplete = async (id: string) => {
-  //   try {
-  //     await saveCompletedHabit(id);
-  //     Alert.alert("Success", "Marked completed for this period.");
-  //   } catch (err) {
-  //     console.error("Complete failed:", err);
-  //     Alert.alert("Error", "Could not mark complete.");
-  //   }
-  // };
-
   return (
-    <View className="flex-1 bg-gray-100">
-      <View className="w-full py-5 items-center">
+    <View className="flex-1 bg-gray-50">
+      {/* Header */}
+      <View className="w-full py-6 items-center bg-white ">
         <Logo />
       </View>
 
-      <Text className="text-2xl font-bold py-5">Your All Habits</Text>
+      <Text className="text-2xl font-bold px-5 py-5 text-gray-900">
+        Your Habits
+      </Text>
 
+      {/* Content */}
       <ScrollView
-        className="px-5"
-        contentContainerStyle={{ paddingBottom: 120 }}
+        className="px-5 mt-2"
+        contentContainerStyle={{ paddingTop: 12, paddingBottom: 120 }} 
+        showsVerticalScrollIndicator={false}
       >
-        {loading ? <Text className="p-5">Loading...</Text> : null}
+        {loading && (
+          <View className="py-10 items-center ">
+            <ActivityIndicator size="large" color="#ef4444" />
+            <Text className="mt-3 text-gray-500">Loading habits...</Text>
+          </View>
+        )}
 
-        {!loading && habits.length === 0 ? (
+        {!loading && habits.length === 0 && (
           <Text className="text-center text-gray-500 mt-10">
-            No habits yet. Tap + to add one.
+            No habits yet. Tap the + button below to add one.
           </Text>
-        ) : null}
+        )}
 
         {habits.map((h) => (
           <HabitCard
@@ -112,18 +113,18 @@ const HabitIndex = () => {
             data={h}
             onEdit={handleEdit}
             onDelete={handleDelete}
-            //onComplete={handleComplete}
           />
         ))}
       </ScrollView>
 
+      {/* Floating Add Button */}
       <Pressable
         className="absolute bottom-6 right-6 bg-red-600 p-4 rounded-full shadow-lg"
         onPress={() => {
           router.push("/(dashboard)/habit/new");
         }}
       >
-        <Entypo name="add-to-list" size={28} color={"white"} />
+        <Entypo name="add-to-list" size={28} color="white" />
       </Pressable>
     </View>
   );

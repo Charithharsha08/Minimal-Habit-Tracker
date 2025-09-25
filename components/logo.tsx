@@ -3,15 +3,18 @@ import { View, Text, Image } from "react-native";
 
 const Logo = () => {
   return (
-    <View className="flex-row items-center space-x-3 mb-8">
+    <View className="flex-row items-center space-x-3">
       <Image
         source={require("../assets/images/logo.png")}
-        className="w-14 h-14 rounded-xl shadow-md"
+        className="w-12 h-12 rounded-xl shadow-md bg-white"
         resizeMode="contain"
       />
-      <Text className="text-2xl font-extrabold text-blue-700 tracking-wide">
-        Minimal Habit Tracker
-      </Text>
+      <View>
+        <Text className="text-xl font-extrabold text-black tracking-tight px-1">
+          Minimal Habit
+        </Text>
+        <Text className="text-xs text-black/80 px-1">Track your growth 🌱</Text>
+      </View>
     </View>
   );
 };

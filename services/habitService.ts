@@ -93,19 +93,37 @@ export const getCompletedHabits = async () => {
   const user = auth.currentUser;
   if (!user) throw new Error("User not authenticated");
 
-  const q = query(
-    completeHabitColRef,
-    where("ownerId", "==", user.uid)
-  );
-
+  const q = query(completeHabitColRef, where("ownerId", "==", user.uid));
   const snapshot = await getDocs(q);
-  const completedHabitList = snapshot.docs.map((d) => ({
-    id: d.id,
-    ...d.data(),
-  })) as any[];
+
+  const completedHabitList = snapshot.docs.map((d) => {
+    const data = d.data() as any;
+    let completedAt: Date | null = null;
+
+    // Robust conversion for Firestore Timestamp | Date | number | string
+    const raw = data.completedAt;
+    if (raw?.toDate) {
+      completedAt = raw.toDate();
+    } else if (raw instanceof Date) {
+      completedAt = raw;
+    } else if (typeof raw === "number") {
+      completedAt = new Date(raw);
+    } else if (typeof raw === "string") {
+      const parsed = new Date(raw);
+      completedAt = isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    return {
+      id: d.id,
+      habitId: data.habitId,
+      ownerId: data.ownerId,
+      completedAt: completedAt ?? new Date(0), // fallback to epoch if somehow missing
+    } as CompletedHabit;
+  });
 
   return completedHabitList;
 };
+
 
 export const getCompletedHabitsByHabitId = async (
   habitId: string,
