@@ -134,6 +134,7 @@ const Home = () => {
         <FlatList
           data={habits}
           keyExtractor={(item) => item.id!}
+          contentContainerStyle={{ paddingTop: 12, paddingHorizontal: 6 }}
           renderItem={({ item }) => (
             <ProcessingHabitCard
               habit={item}
