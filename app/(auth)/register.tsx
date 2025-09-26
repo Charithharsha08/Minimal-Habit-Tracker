@@ -25,7 +25,8 @@ const Register = () => {
   const [loading, setLoading] = React.useState(false);
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: "YOUR_GOOGLE_CLIENT_ID",
+    clientId:
+      "1035601014761-6gqv30ro7ib305ka3uljr73n266gc64r.apps.googleusercontent.com",
   });
 
   React.useEffect(() => {
