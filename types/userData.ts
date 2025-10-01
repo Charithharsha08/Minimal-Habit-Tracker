@@ -7,3 +7,10 @@ export interface UserData {
   weight: number; // in kg
   height: number; // in cm
 }
+
+export interface GoogleUser {
+  id: string;
+  email: string;
+  name: string;
+  picture: string;
+}

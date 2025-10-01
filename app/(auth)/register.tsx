@@ -14,7 +14,12 @@ import React from "react";
 import { useRouter } from "expo-router";
 import { register as registerService } from "../../services/authService";
 import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import { auth } from "@/firebase";
 import Logo from "@/components/logo";
+
+WebBrowser.maybeCompleteAuthSession();
 
 const Register = () => {
   const router = useRouter();
@@ -24,15 +29,25 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
+  // ✅ Google OAuth request
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId:
-      "1035601014761-6gqv30ro7ib305ka3uljr73n266gc64r.apps.googleusercontent.com",
+      "1035601014761-nvkcl03oi0r3dlommoequgfttuvjsecu.apps.googleusercontent.com",
+    iosClientId:
+      "1035601014761-eo7phvr573een2j2ho7d1pfhc5b459j9.apps.googleusercontent.com",
+    androidClientId:
+      "1035601014761-bv0opm2cluh371ae8l5b7p294ftduj4j.apps.googleusercontent.com",
   });
 
   React.useEffect(() => {
     if (response?.type === "success") {
       const { id_token } = response.params;
-      router.push("/home");
+      const credential = GoogleAuthProvider.credential(id_token);
+
+      signInWithCredential(auth, credential).catch((err) => {
+        console.error("Google sign-up error:", err);
+        alert("Google sign-in failed");
+      });
     }
   }, [response]);
 
@@ -41,10 +56,9 @@ const Register = () => {
       alert("Passwords don’t match");
       return;
     }
+    setLoading(true);
     try {
-      setLoading(true);
       await registerService(email, password, name);
-      router.push("/(auth)/login");
     } catch (error: any) {
       alert(error.message || "Registration failed.");
     } finally {
@@ -63,7 +77,6 @@ const Register = () => {
           <Logo />
         </View>
 
-        {/* Main content */}
         <View className="px-6 mt-6">
           <Text className="text-3xl font-bold text-gray-900 mb-2 text-center">
             Create Account ✨
@@ -76,14 +89,12 @@ const Register = () => {
           <TextInput
             className="border border-gray-300 rounded-xl p-4 mb-4 bg-white"
             placeholder="Name"
-            placeholderTextColor="#9ca3af"
             value={name}
             onChangeText={setName}
           />
           <TextInput
             className="border border-gray-300 rounded-xl p-4 mb-4 bg-white"
             placeholder="Email"
-            placeholderTextColor="#9ca3af"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -92,7 +103,6 @@ const Register = () => {
           <TextInput
             className="border border-gray-300 rounded-xl p-4 mb-4 bg-white"
             placeholder="Password"
-            placeholderTextColor="#9ca3af"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -100,7 +110,6 @@ const Register = () => {
           <TextInput
             className="border border-gray-300 rounded-xl p-4 mb-6 bg-white"
             placeholder="Confirm Password"
-            placeholderTextColor="#9ca3af"
             secureTextEntry
             value={confirmPassword}
             onChangeText={setConfirmPassword}
@@ -121,8 +130,9 @@ const Register = () => {
             )}
           </Pressable>
 
-          {/* Google Button */}
+          {/* Google Register */}
           <Pressable
+            disabled={!request}
             onPress={() => promptAsync()}
             className="flex-row items-center border border-gray-300 rounded-xl p-4 bg-white mb-6"
           >

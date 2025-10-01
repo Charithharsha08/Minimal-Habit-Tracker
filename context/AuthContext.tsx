@@ -1,4 +1,5 @@
 import { auth } from "@/firebase";
+import { useRouter } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
 import {
   createContext,
@@ -21,11 +22,18 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user ?? null);
       setLoading(false);
+
+      if (user) {
+        router.replace("/home");
+      } else {
+        router.replace("/(auth)/login");
+      }
     });
 
     return () => unsubscribe();
@@ -37,6 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
 
 export const useAuth = () => {
   return useContext(AuthContext);

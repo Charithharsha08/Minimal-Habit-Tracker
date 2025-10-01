@@ -11,7 +11,6 @@ import {
   Platform,
 } from "react-native";
 import React from "react";
-import { useRouter } from "expo-router";
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
@@ -19,7 +18,11 @@ import {
 } from "firebase/auth";
 import { auth } from "@/firebase";
 import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+import { useRouter } from "expo-router";
 import Logo from "@/components/logo";
+
+WebBrowser.maybeCompleteAuthSession();
 
 const Login = () => {
   const router = useRouter();
@@ -27,10 +30,14 @@ const Login = () => {
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
-  // Google sign-in
+  // ✅ Google OAuth request
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId:
-      "1035601014761-6gqv30ro7ib305ka3uljr73n266gc64r.apps.googleusercontent.com",
+      ".apps.googleusercontent.com",
+    iosClientId:
+      ".apps.googleusercontent.com",
+    androidClientId:
+      ".apps.googleusercontent.com",
   });
 
   React.useEffect(() => {
@@ -38,9 +45,10 @@ const Login = () => {
       const { id_token } = response.params;
       const credential = GoogleAuthProvider.credential(id_token);
 
-      signInWithCredential(auth, credential)
-        .then(() => router.push("/home"))
-        .catch(() => alert("Google sign-in failed."));
+      signInWithCredential(auth, credential).catch((err) => {
+        console.error("Google sign-in error:", err);
+        alert("Google sign-in failed.");
+      });
     }
   }, [response]);
 
@@ -52,7 +60,6 @@ const Login = () => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/home");
     } catch (error: any) {
       alert(error.message || "Login failed.");
     } finally {
@@ -71,7 +78,6 @@ const Login = () => {
           <Logo />
         </View>
 
-        {/* Main content */}
         <View className="px-6 mt-6">
           <Text className="text-3xl font-bold text-gray-900 mb-2 text-center">
             Welcome back 👋
@@ -84,7 +90,6 @@ const Login = () => {
           <TextInput
             className="border border-gray-300 rounded-xl p-4 mb-4 bg-white"
             placeholder="Email"
-            placeholderTextColor="#9ca3af"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -93,13 +98,12 @@ const Login = () => {
           <TextInput
             className="border border-gray-300 rounded-xl p-4 mb-6 bg-white"
             placeholder="Password"
-            placeholderTextColor="#9ca3af"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
           />
 
-          {/* Login Button */}
+          {/* Email Login */}
           <Pressable
             className="bg-red-400 p-4 rounded-xl mb-4"
             onPress={handleLogin}
@@ -114,7 +118,7 @@ const Login = () => {
             )}
           </Pressable>
 
-          {/* Google Button */}
+          {/* Google Login */}
           <Pressable
             disabled={!request}
             onPress={() => promptAsync()}
