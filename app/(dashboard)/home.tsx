@@ -16,6 +16,7 @@ import {
   isHabitCompletedForPeriod,
   getAllHabitsByOwner,
 } from "@/services/habitService";
+import { scheduleDailyHabitReminders } from "@/utils/notification";
 
 const Home = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -95,12 +96,19 @@ const Home = () => {
       }
     );
 
+
+     scheduleDailyHabitReminders().catch((e) =>
+       console.warn("Failed to schedule reminders:", e)
+     );
+
     return () => unsubscribe();
+    
   }, []);
 
   const handleComplete = async (habitId: string) => {
     await saveCompletedHabit(habitId);
     setCompletedHabitIds((prev) => [...prev, habitId]);
+      scheduleDailyHabitReminders().catch(() => {});
   };
 
   const onRefresh = async () => {

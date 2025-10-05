@@ -378,6 +378,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
-
-// 0777472461 

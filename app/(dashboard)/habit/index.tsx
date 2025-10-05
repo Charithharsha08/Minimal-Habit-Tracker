@@ -6,6 +6,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Button,
 } from "react-native";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useRouter } from "expo-router";
@@ -16,6 +17,7 @@ import { Habit } from "@/types/habit";
 import { auth } from "@/firebase";
 import Logo from "@/components/logo";
 import HabitCard from "@/components/habitCard";
+// import { testNotification } from "@/utils/notification";
 
 const HabitIndex = () => {
   const router = useRouter();
@@ -91,7 +93,7 @@ const HabitIndex = () => {
       {/* Content */}
       <ScrollView
         className="px-5 mt-2"
-        contentContainerStyle={{ paddingTop: 12, paddingBottom: 120 }} 
+        contentContainerStyle={{ paddingTop: 12, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
         {loading && (
@@ -126,6 +128,8 @@ const HabitIndex = () => {
       >
         <Entypo name="add-to-list" size={28} color="white" />
       </Pressable>
+
+      {/* <Button title="Test Notification" onPress={() => testNotification()} /> */}
     </View>
   );
 };
