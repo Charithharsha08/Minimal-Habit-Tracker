@@ -33,11 +33,11 @@ const Login = () => {
   // ✅ Google OAuth request
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId:
-      ".apps.googleusercontent.com",
+      "1035601014761-49j8beq5p8qm4u2e7a51038rlhir1gu4.apps.googleusercontent.com",
     iosClientId:
-      ".apps.googleusercontent.com",
+      "1035601014761-eo7phvr573een2j2ho7d1pfhc5b459j9.apps.googleusercontent.com",
     androidClientId:
-      ".apps.googleusercontent.com",
+      "1035601014761-bv0opm2cluh371ae8l5b7p294ftduj4j.apps.googleusercontent.com",
   });
 
   React.useEffect(() => {

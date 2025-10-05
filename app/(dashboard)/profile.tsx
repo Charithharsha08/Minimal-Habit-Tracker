@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { auth } from "@/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -65,27 +66,117 @@ const Profile = () => {
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
+    Alert.alert(
+      "Select Option",
+      "Choose a photo source",
+      [
+        {
+          text: "Take Photo",
+          onPress: async () => {
+            const { status: cameraStatus, canAskAgain } =
+              await ImagePicker.requestCameraPermissionsAsync();
+            console.log("Camera Permission:", cameraStatus, canAskAgain);
 
-    if (!result.canceled) {
-      try {
-        setUploading(true);
-        const url = await uploadProfilePhoto(result.assets[0].uri);
-        setUser({ ...user!, photoURL: url } as User);
-        Alert.alert("Success", "Profile photo updated!");
-      } catch (e) {
-        console.error("Upload failed", e);
-        Alert.alert("Error", "Could not upload photo");
-      } finally {
-        setUploading(false);
-      }
-    }
+            if (cameraStatus !== "granted") {
+              if (!canAskAgain) {
+                Alert.alert(
+                  "Permission Denied",
+                  "Camera access has been denied permanently. Please enable it in your device settings.",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Open Settings",
+                      onPress: () => Linking.openSettings(),
+                    },
+                  ]
+                );
+              } else {
+                Alert.alert(
+                  "Permission Required",
+                  "We need camera access to take a profile photo."
+                );
+              }
+              return;
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+              allowsEditing: true,
+              aspect: [1, 1],
+              quality: 0.7,
+            });
+
+            if (!result.canceled) {
+              try {
+                setUploading(true);
+                const url = await uploadProfilePhoto(result.assets[0].uri);
+                setUser({ ...user!, photoURL: url } as User);
+                Alert.alert("Success", "Profile photo updated!");
+              } catch (e) {
+                console.error("Upload failed", e);
+                Alert.alert("Error", "Could not upload photo");
+              } finally {
+                setUploading(false);
+              }
+            }
+          },
+        },
+        {
+          text: "Choose from Gallery",
+          onPress: async () => {
+            const { status: mediaStatus, canAskAgain } =
+              await ImagePicker.requestMediaLibraryPermissionsAsync();
+            console.log("Gallery Permission:", mediaStatus, canAskAgain);
+
+            if (mediaStatus !== "granted") {
+              if (!canAskAgain) {
+                Alert.alert(
+                  "Permission Denied",
+                  "Gallery access has been denied permanently. Please enable it in your device settings.",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Open Settings",
+                      onPress: () => Linking.openSettings(),
+                    },
+                  ]
+                );
+              } else {
+                Alert.alert(
+                  "Permission Required",
+                  "We need access to your gallery to select a profile picture."
+                );
+              }
+              return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              allowsEditing: true,
+              aspect: [1, 1],
+              quality: 0.7,
+            });
+
+            if (!result.canceled) {
+              try {
+                setUploading(true);
+                const url = await uploadProfilePhoto(result.assets[0].uri);
+                setUser({ ...user!, photoURL: url } as User);
+                Alert.alert("Success", "Profile photo updated!");
+              } catch (e) {
+                console.error("Upload failed", e);
+                Alert.alert("Error", "Could not upload photo");
+              } finally {
+                setUploading(false);
+              }
+            }
+          },
+        },
+        { text: "Cancel", style: "cancel" },
+      ],
+      { cancelable: true }
+    );
   };
+
 
   const handleUpdate = async () => {
     try {
@@ -287,3 +378,6 @@ const Profile = () => {
 };
 
 export default Profile;
+
+
+// 0777472461 

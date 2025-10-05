@@ -12,19 +12,23 @@ import {
 import { auth, db } from "../firebase";
 import { UserData } from "../types/userData";
 import { updateProfile } from "firebase/auth";
+import { Platform } from "react-native";
 
 export const uploadProfilePhoto = async (uri: string): Promise<string> => {
   if (!auth.currentUser) throw new Error("Not authenticated");
 
   const cloudName = "drbpkssnp";
-  const uploadPreset = "profile-upload"; // must be unsigned!
-
+  const uploadPreset = "profile-upload"; 
   const formData = new FormData();
-  formData.append("file", {
-    uri,
-    type: "image/jpeg",
-    name: "profile.jpg",
-  } as any);
+  let file : any;
+  if (Platform.OS === "web") {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    file = new File([blob], "profile.jpg", { type: "image/jpeg" });
+  } else {
+    file = { uri: uri, type: "image/jpeg", name: "profile.jpg" };
+  }
+  formData.append("file", file);
   formData.append("upload_preset", uploadPreset);
 
   const response = await fetch(
@@ -33,7 +37,6 @@ export const uploadProfilePhoto = async (uri: string): Promise<string> => {
   );
 
   const data = await response.json();
-
   if (!data.secure_url) {
     throw new Error("Upload failed: " + JSON.stringify(data));
   }
